@@ -6,6 +6,7 @@
 #include <errno.h>
 #include <limits.h>
 #include <stdlib.h>
+#include <ulimit.h>
 
 void print_help() {
     printf("this program is useless, so just don't use it\n");
@@ -39,24 +40,31 @@ int main(int argc, char **argv, char **envp) {
                 printf("pid: %d; ppid: %d; pgid: %d", getpid(), getppid(), getpgrp());
                 break;
             case 'u':
+                printf("ulimit: %lu\n", ulimit(UL_GETFSIZE, 0));
                 // system("ulimit");
-                if (getrlimit(RLIMIT_NOFILE, &limit) != 0) {
-                    perror("getrlimit() error");
-                    return 1;
-                }
-                printf("ulimit: %lu\n", limit.rlim_cur);
+                // if (getrlimit(RLIMIT_NOFILE, &limit) != 0) {
+                //     perror("getrlimit() error");
+                //     return 1;
+                // }
+                // printf("ulimit: %lu\n", limit.rlim_cur);
                 break;
             case 'U':
-                if (getrlimit(RLIMIT_NOFILE, &limit) != 0) {
-                    perror("getrlimit() error");
+                if (ulimit(UL_SETFSIZE, strtoul(optarg, &endptr, 10)) == -1) {
+                    perror("ulimit() error");
                     return 1;
+                } else {
+                    printf("ulimit set\n");
                 }
-                limit.rlim_cur = strtoul(optarg, &endptr, 10);
-                if (setrlimit(RLIMIT_NOFILE, &limit) != 0) {
-                    perror("setrlimit() error");
-                    return 1;
-                }
-                printf("ulimit set to %ld\n", limit.rlim_cur);
+                // if (getrlimit(RLIMIT_NOFILE, &limit) != 0) {
+                //     perror("getrlimit() error");
+                //     return 1;
+                // }
+                // limit.rlim_cur = strtoul(optarg, &endptr, 10);
+                // if (setrlimit(RLIMIT_NOFILE, &limit) != 0) {
+                //     perror("setrlimit() error");
+                //     return 1;
+                // }
+                // printf("ulimit set to %ld\n", limit.rlim_cur);
                 break;
             case 'c':
                 if (getrlimit(RLIMIT_CORE, &limit) != 0) {
