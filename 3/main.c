@@ -10,10 +10,21 @@
 
 int main(int argc, char **argv, char **envp) { 
     printf("uid: %d, euid: %d\n", getuid(), geteuid());
-    FILE* f = fopen("testfile", "r");
+    FILE* f = fopen("file", "r");
     if (f == NULL) {
         perror("file open error");
+    } else {
+        fclose(f);
     }
-    fclose(f);
+
+    seteuid(getuid());
+    printf("uid: %d, euid: %d\n", getuid(), geteuid());
+    f = fopen("file", "r");
+    if (f == NULL) {
+        perror("file open error");
+    } else {
+        fclose(f);
+    }
+
     return 0; 
 }
