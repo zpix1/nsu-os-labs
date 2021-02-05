@@ -14,6 +14,8 @@ void print_help() {
 
 #define COMMAND_SIZE 200
 
+extern char **environ;
+
 int main(int argc, char **argv, char **envp) { 
     if (argc == 1) {
         print_help();
@@ -26,6 +28,7 @@ int main(int argc, char **argv, char **envp) {
     char cwd[PATH_MAX];
     char command[COMMAND_SIZE];
     char* endptr;
+    char** envname;
     
     while ((opt = getopt(argc, argv, "ispuU:cC:dvV:h")) != -1) {
         switch (opt) {
@@ -37,7 +40,7 @@ int main(int argc, char **argv, char **envp) {
                 printf("became group leader with result %d\n", setpgid(0, 0));
                 break;
             case 'p':
-                printf("pid: %d; ppid: %d; pgid: %d", getpid(), getppid(), getpgrp());
+                printf("pid: %d; ppid: %d; pgid: %d\n", getpid(), getppid(), getpgrp());
                 break;
             case 'u':
                 printf("ulimit: %lu\n", ulimit(UL_GETFSIZE, 0));
@@ -55,12 +58,12 @@ int main(int argc, char **argv, char **envp) {
                 } else {
                     printf("ulimit set\n");
                 }
-                // if (getrlimit(RLIMIT_NOFILE, &limit) != 0) {
+                // if (getrlimit(RLIMIT_FSIZE, &limit) != 0) {
                 //     perror("getrlimit() error");
                 //     return 1;
                 // }
                 // limit.rlim_cur = strtoul(optarg, &endptr, 10);
-                // if (setrlimit(RLIMIT_NOFILE, &limit) != 0) {
+                // if (setrlimit(RLIMIT_FSIZE, &limit) != 0) {
                 //     perror("setrlimit() error");
                 //     return 1;
                 // }
@@ -94,8 +97,10 @@ int main(int argc, char **argv, char **envp) {
                 }
                 break;
             case 'v':
-                printf("printing env variables:\n");
-                system("env");
+                // system("env");
+                for (envname = environ; *envname != 0; envname++) {
+                    printf("%s\n", *envname);
+                }
                 break;
             case 'V':
                 putenv(optarg);
