@@ -7,8 +7,8 @@ int main() {
     time_t now;
     struct tm *sp;
     time(&now);
-    // putenv("TZ=PST8PDT");
-    now -= 60 * 60 * (7 + 8);
+    putenv("TZ=America/Los_Angeles");
+    // now -= 60 * 60 * (7 + 8);
     printf("%s", ctime(&now));
 
     // sp = localtime(&now);

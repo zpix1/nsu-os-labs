@@ -17,7 +17,7 @@ int main(int argc, char **argv, char **envp) {
         fclose(f);
     }
 
-    seteuid(getuid());
+    setuid(getuid());
     printf("uid: %d, euid: %d\n", getuid(), geteuid());
     f = fopen("file", "r");
     if (f == NULL) {

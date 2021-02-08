@@ -30,7 +30,8 @@ int main(int argc, char **argv, char **envp) {
     char* endptr;
     char** envname;
     
-    while ((opt = getopt(argc, argv, "ispuU:cC:dvV:h")) != -1) {
+    while ((opt = getopt(argc, argv, "ispuU:cC:dvV:hx")) != -1) {
+        printf("argument n. %d\n", optind);
         switch (opt) {
             case 'i':
                 // system("id");
@@ -43,31 +44,35 @@ int main(int argc, char **argv, char **envp) {
                 printf("pid: %d; ppid: %d; pgid: %d\n", getpid(), getppid(), getpgrp());
                 break;
             case 'u':
-                printf("ulimit: %lu\n", ulimit(UL_GETFSIZE, 0));
+                // printf("ulimit: %lu\n", ulimit(UL_GETFSIZE, 0));
                 // system("ulimit");
-                // if (getrlimit(RLIMIT_NOFILE, &limit) != 0) {
-                //     perror("getrlimit() error");
-                //     return 1;
-                // }
-                // printf("ulimit: %lu\n", limit.rlim_cur);
+                if (getrlimit(RLIMIT_FSIZE, &limit) != 0) {
+                    perror("getrlimit() error");
+                    return 1;
+                }
+                printf("ulimit: %lu\n", limit.rlim_cur);
                 break;
             case 'U':
-                if (ulimit(UL_SETFSIZE, strtoul(optarg, &endptr, 10)) == -1) {
-                    perror("ulimit() error");
+                // if (ulimit(UL_SETFSIZE, strtoul(optarg, &endptr, 10)) == -1) {
+                //     perror("ulimit() error");
+                //     return 1;
+                // } else {
+                //     printf("ulimit set\n");
+                // }
+                if (getrlimit(RLIMIT_FSIZE, &limit) != 0) {
+                    perror("getrlimit() error");
                     return 1;
-                } else {
-                    printf("ulimit set\n");
                 }
-                // if (getrlimit(RLIMIT_FSIZE, &limit) != 0) {
-                //     perror("getrlimit() error");
-                //     return 1;
-                // }
-                // limit.rlim_cur = strtoul(optarg, &endptr, 10);
-                // if (setrlimit(RLIMIT_FSIZE, &limit) != 0) {
-                //     perror("setrlimit() error");
-                //     return 1;
-                // }
-                // printf("ulimit set to %ld\n", limit.rlim_cur);
+                limit.rlim_cur = strtoul(optarg, &endptr, 10);
+                if (endptr == optarg) {
+                    fprintf(stderr, "no digits found in the argument (-U)\n");
+                    return 1;
+                }
+                if (setrlimit(RLIMIT_FSIZE, &limit) != 0) {
+                    perror("setrlimit() error");
+                    return 1;
+                }
+                printf("ulimit set to %ld\n", limit.rlim_cur);
                 break;
             case 'c':
                 if (getrlimit(RLIMIT_CORE, &limit) != 0) {
@@ -108,6 +113,9 @@ int main(int argc, char **argv, char **envp) {
                 break;
             case 'h':
                 print_help();
+                break;
+            case 'x':
+                *((int*)0) = 1;
                 break;
             // case '?':
             //     printf("unknown option: %c\n", optopt); 
