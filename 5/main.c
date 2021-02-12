@@ -4,30 +4,48 @@
 #include <sys/stat.h>
 #include <fcntl.h>
 #include <stdlib.h>
+#include <sys/sendfile.h>
 
 #define BUFSIZE 512
 #define ENTRYSTEP 10
 
+struct LineEntry {
+    off_t offset;
+    ssize_t length;
+};
+
+void print_line(int fd, struct LineEntry* entries, int linen) {
+    lseek(fd, entries[linen].offset, SEEK_SET);
+    char* lbuf = malloc(entries[linen].length + 1);
+    read(fd, lbuf, entries[linen].length);
+    lbuf[entries[linen].length] = '\0';
+    printf("%s\n", lbuf);
+    free(lbuf);
+}
+
 int main(int argc, char** argv) {
     if (argc < 2) {
-        printf("no filename specified");
+        printf("no filename specified\n");
         return 1;
     }
+
+    int tty_fd = open("/dev/tty", O_RDONLY);
+    if (tty_fd == -1) {
+        perror("/dev/tty");
+        return 1;
+    }
+
     int fd = open(argv[1], O_RDONLY);
     if (fd == -1) {
         perror(argv[1]);
         return 1;
     }
+
     int entrymaxn = 100;
 
     off_t total = 0;
     ssize_t scanned;
     char buf[BUFSIZE];
-    struct LineEntry {
-        off_t offset;
-        ssize_t length;
-    };
-
     struct LineEntry* entries = malloc(entrymaxn * sizeof(struct LineEntry));
     entries[0].offset = 0;
     int entryno = 0;
@@ -39,7 +57,7 @@ int main(int argc, char** argv) {
                 entryno++;
                 entries[entryno].offset = total + i + 1;
             }
-            if (entryno == entrymaxn) {
+            if (entryno == entrymaxn - 1) {
                 entrymaxn += ENTRYSTEP;
                 entries = realloc(entries, entrymaxn * sizeof(struct LineEntry));
             }
@@ -52,24 +70,35 @@ int main(int argc, char** argv) {
     }
 
     int linen;
+    char* endptr;
     while (1) {
-        printf("Enter line index (or zero to exit): ");
-        scanf("%d", &linen);
-        if (linen == 0) {
+        printf("Enter line index in 5 seconds (or zero to exit): \n");
+        int result = read(tty_fd, buf, BUFSIZE);
+        if (result == -1) {
+            perror("read error");
+        }
+        if (result == 0) {
+            printf("Nothing entered, printing all lines:\n");
+            for (int i = 0; i < entryno; i++) {
+                print_line(fd, entries, i);
+            }
             break;
         }
-        if (linen > entryno || linen < 0) {
+
+        linen = strtoul(buf, &endptr, 10);
+        if ((linen > entryno || linen < 0) || (endptr == buf)) {
             printf("invalid line index\n");
         } else {
+            if (linen == 0) {
+                break;
+            }
             linen--;
-            lseek(fd, entries[linen].offset, SEEK_SET);
-            char* lbuf = malloc(entries[linen].length + 1);
-            read(fd, lbuf, entries[linen].length);
-            lbuf[entries[linen].length] = '\0';
-            printf("%s\n", lbuf);
-            free(lbuf);
+            print_line(fd, entries, linen);
+            // sendfile(1, fd, &entries[linen].offset, entries[linen].length + 1);
         }
     };
+
+    close(fd);
 
     free(entries);
 }

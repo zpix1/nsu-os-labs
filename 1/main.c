@@ -68,6 +68,7 @@ int main(int argc, char **argv, char **envp) {
                     fprintf(stderr, "no digits found in the argument (-U)\n");
                     return 1;
                 }
+                // Мягкий (административный) предел устанавливается setrlimit(2) с командой RLIMIT_NOFILE или командой ulimit(1). Жёсткий предел устанавливается настройками ядра системы. Значение жёсткого предела можно определить системным вызовом sysconf(2) с параметром _SC_OPEN_MAX.  В Solaris, жесткий предел устанавливается параметром rlim_fd_max в файле /etc/system (system(4)); его изменение требует административных привилегий и перезагрузки системы.
                 if (setrlimit(RLIMIT_FSIZE, &limit) != 0) {
                     perror("setrlimit() error");
                     return 1;
