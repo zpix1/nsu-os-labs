@@ -53,6 +53,12 @@ int main(int argc, char** argv) {
         for (ssize_t i = 0; i < scanned; i++) {
             if ((buf[i] == '\n') 
                     || (scanned < BUFSIZE && i == scanned - 1)) {
+                // bred version
+                // off_t lseek_total = lseek(fd, 0, SEEK_CUR) - scanned + i;
+                // entries[entryno].length = lseek_total - entries[entryno].offset;
+                // entryno++;
+                // entries[entryno].offset = lseek_total + 1;
+
                 entries[entryno].length = total + i - entries[entryno].offset;
                 entryno++;
                 entries[entryno].offset = total + i + 1;
@@ -72,7 +78,7 @@ int main(int argc, char** argv) {
     int linen;
     char* endptr;
     while (1) {
-        printf("Enter line index in 5 seconds (or zero to exit): \n");
+        printf("Enter line index: \n");
         int result = read(tty_fd, buf, BUFSIZE);
         if (result == -1) {
             perror("read error");
@@ -99,6 +105,7 @@ int main(int argc, char** argv) {
     };
 
     close(fd);
+    close(tty_fd);
 
     free(entries);
 }
