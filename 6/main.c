@@ -1,4 +1,3 @@
-// #define _FILE_OFFSET_BITS 64
 #include <stdio.h>
 #include <unistd.h>
 #include <sys/types.h>
@@ -6,6 +5,8 @@
 #include <fcntl.h>
 #include <stdlib.h>
 #include <sys/sendfile.h>
+#include <sys/select.h>
+#include <poll.h>
 
 #define BUFSIZE 512
 #define ENTRYSTEP 10
@@ -38,7 +39,7 @@ int main(int argc, char** argv) {
         return 1;
     }
 
-    int tty_fd = open("/dev/tty", O_RDONLY);
+    int tty_fd = open("/dev/tty", O_RDONLY | O_NDELAY);
     if (tty_fd == -1) {
         perror("/dev/tty");
         return 1;
@@ -55,26 +56,14 @@ int main(int argc, char** argv) {
     off_t total = 0;
     ssize_t scanned;
     char buf[BUFSIZE];
-
     struct LineEntry* entries = malloc(entrymaxn * sizeof(struct LineEntry));
     check(entries);
-
     entries[0].offset = 0;
     int entryno = 0;
     while (scanned = read(fd, buf, BUFSIZE)) {
-        if (scanned == -1) {
-            perror("read");
-            exit(1);
-        }
         for (ssize_t i = 0; i < scanned; i++) {
             if ((buf[i] == '\n') 
                     || (scanned < BUFSIZE && i == scanned - 1)) {
-                // bred version
-                // off_t lseek_total = lseek(fd, 0, SEEK_CUR) - scanned + i;
-                // entries[entryno].length = lseek_total - entries[entryno].offset;
-                // entryno++;
-                // entries[entryno].offset = lseek_total + 1;
-
                 entries[entryno].length = total + i - entries[entryno].offset;
                 entryno++;
                 entries[entryno].offset = total + i + 1;
@@ -94,30 +83,57 @@ int main(int argc, char** argv) {
 
     int linen;
     char* endptr;
+
+    fd_set set;
+    struct timeval timeout;
+    timeout.tv_sec = 5;
+    timeout.tv_usec = 0;
+
+    struct pollfd pollarg;
+    pollarg.fd = tty_fd;
+    pollarg.events = POLLIN;
+
     while (1) {
-        printf("Enter line index: \n");
-        int result = read(tty_fd, buf, BUFSIZE);
-        if (result == -1) {
-            perror("read error");
-        }
-        if (result == 0) {
+        printf("Enter line index in 5 seconds (or zero to exit): \n");
+
+        // FD_ZERO(&set);
+        // FD_SET(tty_fd, &set);
+        // int res = select(tty_fd + 1, &set, NULL, NULL, &timeout);
+
+        int res = poll(&pollarg, 1, 5 * 1000);
+        if (res == -1) {
+            perror("select or poll");
+        } else if (res == 0) {
             printf("Nothing entered, printing all lines:\n");
             for (int i = 0; i < entryno; i++) {
                 print_line(fd, entries, i);
             }
             break;
-        }
-
-        linen = strtoul(buf, &endptr, 10);
-        if ((linen > entryno || linen < 0) || (endptr == buf)) {
-            printf("invalid line index\n");
         } else {
-            if (linen == 0) {
+            printf("pollarg.revents: %d\n", pollarg.revents);
+            if (pollarg.revents & POLLERR) {
+                fprintf(stderr, "very bad, error\n");
+                continue;
+            }
+            int read_result = read(tty_fd, buf, BUFSIZE);
+            if (read_result == 0) {
+                printf("Nothing entered, printing all lines:\n");
+                for (int i = 0; i < entryno; i++) {
+                    print_line(fd, entries, i);
+                }
                 break;
             }
-            linen--;
-            print_line(fd, entries, linen);
-            // sendfile(1, fd, &entries[linen].offset, entries[linen].length + 1);
+            linen = strtoul(buf, &endptr, 10);
+            if ((linen > entryno || linen < 0) || (endptr == buf)) {
+                printf("invalid line index\n");
+            } else {
+                if (linen == 0) {
+                    break;
+                }
+                linen--;
+                print_line(fd, entries, linen);
+                // sendfile(1, fd, &entries[linen].offset, entries[linen].length + 1);
+            }
         }
     };
 

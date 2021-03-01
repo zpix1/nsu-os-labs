@@ -16,8 +16,16 @@ struct LineEntry {
     ssize_t length;
 };
 
+void check(void* ptr) {
+    if (ptr == NULL) {
+        perror("very bad");
+        exit(1);
+    }
+}
+
 void print_line(char* start, struct LineEntry* entries, int linen) {
     char* lbuf = malloc(entries[linen].length + 1);
+    check(lbuf);
     memcpy(lbuf, start + entries[linen].offset, entries[linen].length);
     lbuf[entries[linen].length] = '\0';
     printf("%s\n", lbuf);
@@ -57,6 +65,7 @@ int main(int argc, char** argv) {
 
     int entrymaxn = 100;
     struct LineEntry* entries = malloc(entrymaxn * sizeof(struct LineEntry));
+    check(entries);
     entries[0].offset = 0;
     int entryno = 0;
 
@@ -70,6 +79,7 @@ int main(int argc, char** argv) {
         if (entryno == entrymaxn - 1) {
             entrymaxn += ENTRYSTEP;
             entries = realloc(entries, entrymaxn * sizeof(struct LineEntry));
+            check(entries);
         }
     }
 
@@ -81,8 +91,8 @@ int main(int argc, char** argv) {
     int linen;
     char* endptr;
     while (1) {
-        printf("Enter line index in 5 seconds (or zero to exit): \n");
-        sleep(5);
+        printf("Enter line index (or zero to exit): \n");
+        // sleep(5);
         int result = read(tty_fd, buf, BUFSIZE);
         if (result == -1) {
             perror("read error");
@@ -109,6 +119,7 @@ int main(int argc, char** argv) {
 
     close(fd);
     close(tty_fd);
+    munmap(filestart, sbuf.st_size);
 
     free(entries);
 }
