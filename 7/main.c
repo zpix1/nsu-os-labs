@@ -38,7 +38,7 @@ int main(int argc, char** argv) {
         return 1;
     }
 
-    int tty_fd = open("/dev/tty", O_RDONLY | O_NDELAY);
+    int tty_fd = open("/dev/tty", O_RDONLY);
     if (tty_fd == -1) {
         perror("/dev/tty");
         return 1;
@@ -58,7 +58,7 @@ int main(int argc, char** argv) {
     
     char* filestart;
 
-    if ((filestart = mmap(0, sbuf.st_size, PROT_READ, MAP_SHARED, fd, 0)) == (-1)) {
+    if ((filestart = mmap(0, sbuf.st_size, PROT_READ, MAP_PRIVATE, fd, 0)) == (void*)(-1)) {
         perror("mmap");
         return 1;
     }

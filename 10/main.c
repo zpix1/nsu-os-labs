@@ -3,6 +3,10 @@
 #include <wait.h>
 
 int main(int argc, char** argv) {
+    if (argc < 2) {
+        fprintf(stderr, "not enough args\n");
+	return 1;
+    }
     int status;
     pid_t pid;
     if ((pid = fork()) != -1) {
@@ -18,8 +22,10 @@ int main(int argc, char** argv) {
                 return 1;
             }
             if (WIFEXITED(stat)) {
+	
                 printf("%s exited with code %d\n", argv[1], WEXITSTATUS(stat));
-            } else if (WIFSIGNALED(stat)) {
+        	return WEXITSTATUS(stat);
+	    } else if (WIFSIGNALED(stat)) {
                 printf("%s signaled with signal %d\n", WTERMSIG(stat));
             } else {
                 printf("strange...\n");

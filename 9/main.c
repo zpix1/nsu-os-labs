@@ -6,7 +6,7 @@ int main() {
     pid_t pid;
     if ((pid = fork()) != -1) {
         if (pid == 0) {
-            execlp("cat", "cat", "/etc/passwd", 0);
+            execlp("cat", "cat", "file", 0);
             perror("execlp");
         } else {
             if (wait(0) == -1) {
