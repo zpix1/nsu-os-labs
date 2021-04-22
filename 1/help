@@ -1,2 +1,0 @@
-long size = pathconf(".", _PC_PATH_MAX);
-char* cwd = getcwd(NULL, 0);

@@ -1,6 +1,0 @@
-truss ./test
-https://illumos.org/man/mallopt
-https://illumos.org/man/malloc
-
-free - не освобождает память
-freezero - ТОЖЕ НЕ ОСВОБОЖДАЕТ?
