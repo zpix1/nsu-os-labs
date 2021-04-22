@@ -1,0 +1,48 @@
+how can .sh file with only one commented line delete your entire system?
+
+process:
+    1. K state (running, waiting, stopped, zombie)
+    2. K priority ?
+    3. K relatives (parent, children)
+    4. K resources (files, ...)
+    5. U virtual memory (env, ...)
+    6. K creds (e{uid,gid}, s{uid,gid}, capabilities?)
+
+lifecycle of `main`:
+1. creation
+    * mitosis KEKW
+    * fork\clone syscalls
+    * execve
+2. loading
+    * FAIL if main is not executable
+    * what to load?
+        1. shebang (#!/bin/X) - get the /bin/X from main and run it with file argument: /bin/X main [main args]
+            * #!/bin/echo
+        2. binfmt_misc - sweet dreams
+        3. dynamically linked - interpreter (ex. ld.so)
+            * locate libraries:
+                1. LD_PRELOAD
+                2. LD_LIBRARY_PATH
+                3. ... (confs, /usr/lib, ...)
+            * load libraries:
+                1. load them
+                2. relocations
+            * readelf -a main | grep interpret
+            * /usr/lib/amd64/ld.so.1 main
+            * LINUX: patchelf --set-interpreter /kek ./main
+        4. statically linked (ex. busybox)
+        5. other garbage formats
+    P.S. recursive (all of this)
+
+3. initialization
+    * constructors (libc stuff: malloc, buffers)
+
+4. launch
+    * LINUX: __libc_start_main (args, env)
+    * SOLARIS: _start_crt
+    * IMPORT\EXPORT symbols (main's IMPORT symbs are libs EXPORT symbs) (lasy\RELRO)
+    * nm -D ./main
+
+5. termination
+    * unhandled signal / exit syscall
+    * zombie or RIP

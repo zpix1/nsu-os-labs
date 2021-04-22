@@ -1,0 +1,1 @@
+export ARG=~/* && gcc lsld.c -o lsld && ./lsld $ARG && ls -ld $ARG
