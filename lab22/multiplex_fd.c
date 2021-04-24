@@ -6,10 +6,9 @@
 #include <stdlib.h>
 #include <signal.h>
 #include <errno.h>
-#include <string.h>
 
 #define BUFSIZE 256
-#define TIMEOUT 5
+#define TIME_OUT 5
 
 enum state {
     STATE_EOF,
@@ -19,7 +18,6 @@ enum state {
 
 struct mtype {
     int fd;
-    FILE* file;
     char* fname;
     struct mtype* next;
     struct mtype* prev;
@@ -46,22 +44,22 @@ int main(int argc, char** argv) {
     struct mtype* current = NULL;
 
     for (int i = 0; i < n; i++) {
-        FILE* file = fopen(argv[i + 1], "rb");
-        if (file == NULL) {
+        int fd = open(argv[i + 1], O_RDONLY);
+        if (fd == -1) {
             perror(argv[i + 1]);
         } else {
             struct mtype* new = malloc(sizeof(struct mtype));
-            new->file = file;
+            new->fd = fd;
             new->prev = current;
             new->next = NULL;
-            new->fname = argv[i + 1];
+            new->fname = argv[i +1 ];
             if (current == NULL) {
                 head = new;
             } else {
                 current->next = new;
             }
             current = new;
-            printf("%s opened\n", new->fname);
+            printf("%s (%d) opened\n", new->fname, new->fd);
         }
     }
     
@@ -77,22 +75,17 @@ int main(int argc, char** argv) {
 
     current = head;
     while (current->next != NULL) {
-        alarm(TIMEOUT);
-        printf("reading from %s...\n", current->fname);
-        errno = 0;
-        char* res = fgets(buf, BUFSIZE, current->file);
-        // int res = read(current->fd, buf, BUFSIZE);
-        if (res == NULL) {
+        alarm(TIME_OUT);
+        printf("reading from %s (%d)...\n", current->fname, current->fd);
+        int res = read(current->fd, buf, BUFSIZE);
+        if (res == -1 || res == 0) {
             if (errno == EINTR) {
                 printf("timeout\n");
-                current = current->next;
-            } else if (errno != 0) {
-                perror(current->fname);
             } else {
                 current->next->prev = current->prev;
                 current->prev->next = current->next;
-                fclose(current->file);
-                printf("removed %s\n", current->fname);
+                close(current->fd);
+                printf("removed %d\n", current->fd);
                 struct mtype* tmp = current->next;
                 free(current);
                 if (tmp == current) {
@@ -101,8 +94,8 @@ int main(int argc, char** argv) {
                 current = tmp;
             }
         } else {
-            buf[strlen(buf) - 1] = '\0';
-            printf("read: %s\n", buf);
+            buf[res] = '\0';
+            printf("read: %s", buf);
             current = current->next;
         }
     }
