@@ -25,4 +25,38 @@ how it does NOT work:
 how it does work (user level):
     1. child runs ptrace (PTRACE_TRACEME), then debugger (parent) can control it (also parent can attach to any process somehow)
     2. ptraced child stops after any signal, then parent can control it (while it's stopped)
-    3. 
+
+start gdb:
+    gdb <filepath>
+    gdb -p <pid> (echo 0 | sudo tee /proc/sys/kernel/yama/ptrace_scope)
+
+usage:
+    run
+    continue
+    step, stepi
+    next, nexti
+    break <func|addr|if ...>
+    catch syscall <syscall name or id>
+    info registers
+    backtrace
+    print ($rax, printf, ...)
+    x/10xg <addr>
+    disas, set, 
+
+how does ptrace work (linux, api):
+    1. read\write data - copy from\to user
+    2. read\write registers - ...
+    3. ...
+
+how breakpoints work (let's set bp to addr):
+    1. read and save instruction at addr
+    2. write trap instruction instead (int3, something invalid)
+    3. when CPU sees trap, it'll produce interrupt (that goes to kernel, then to debugee, then to debugger)
+    4. if IP in breakpoints, that's it, process is stopped at breakpoint; if not - crash, ...
+    5. when continue: write saved instruction back
+    6. step
+    7. write trap back
+    8. continue
+P.S. not for multithreading
+
+DWARF - debug info format (for elf kekw), symbols, lines, structs, constants, ...
