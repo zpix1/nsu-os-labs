@@ -41,7 +41,7 @@ usage:
     backtrace
     print ($rax, printf, ...)
     x/10xg <addr>
-    disas, set, 
+    disas, set, gcore, ...
 
 how does ptrace work (linux, api):
     1. read\write data - copy from\to user
@@ -60,3 +60,22 @@ how breakpoints work (let's set bp to addr):
 P.S. not for multithreading
 
 DWARF - debug info format (for elf kekw), symbols, lines, structs, constants, ...
+
+antidebug:
+    1. ask if debugger is present (/proc/<pid>/status TracerPid)
+    solution:
+        disable that api (kernel module)
+    2. detect 0xCC, try SIGTRAP handlers
+    3. integrity check
+    solution 2-3:
+        a. hbreak (hardware breakpoint, at most 4, no code modification)
+    4. add own debugger (one process - one debugger) (ptrace(PTRACE_TRACEME, 0, 1, 0) != -1)
+    5. ASLR check
+
+interesting race condition vulnerability in Serenity OS (privilege escalation)
+ptrace.cpp:
+    load_process_to_memory(...)
+    
+    ... do some stuff ...
+
+    if (binary_has_setuid_bit()) add_setuid_bit_to_process()
