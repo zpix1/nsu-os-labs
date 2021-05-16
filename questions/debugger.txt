@@ -1,0 +1,28 @@
+debuggers
+
+ptrace, ltrace
+
+gdb, dbx, ...
+
+why:
+    1. find errors, do optimizations
+    2. analysis
+
+what can I do:
+    1. run a new process or attach to an existing
+    2. pause process at different locations:
+        a. specific addresses
+        b. functions
+        c. syscalls
+    3. peek, dump and change process memory
+    4. peek and change registers
+    5. scripting (python for gdb)
+
+how it does NOT work:
+    1. no simulation (ex. as valgrind, qemu)
+    2. no magic
+
+how it does work (user level):
+    1. child runs ptrace (PTRACE_TRACEME), then debugger (parent) can control it (also parent can attach to any process somehow)
+    2. ptraced child stops after any signal, then parent can control it (while it's stopped)
+    3. 
