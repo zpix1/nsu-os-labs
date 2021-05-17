@@ -1,0 +1,16 @@
+system V message queues
+
+example:
+    make
+    ./sender&
+    ./receiver
+
+int msgsnd(int __msqid, const void *__msgp, size_t __msgsz, int __msgflg)
+ssize_t msgrcv(int __msqid, void *__msgp, size_t __msgsz, long __msgtyp, int __msgflg)
+
+msgtyp 0            - first message
+       n            - first message of type n
+      -n            - first message with min type <= n
+
+msgflg IPC_NOWAIT   - instant return if no messages
+       MSG_NOERROR  - write message even if it's too long (truncate)
